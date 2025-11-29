@@ -7,51 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- GitHub Actions workflows for CI/CD pipeline
-  - Test workflow with matrix testing (Ubuntu/macOS, Python 3.13)
-  - License checking workflow for dependency compliance
-  - PR validation workflow
-  - PyPI publishing workflow for releases
-- Project governance documentation
-  - CONTRIBUTING.md with contribution guidelines
-  - SECURITY.md with security policy and vulnerability reporting
-- Project URLs in pyproject.toml for better PyPI integration
-  - Homepage, Repository, Documentation, Bug Tracker, Source Code links
-
-### Fixed
-- Git URL normalization in `repo_finder.py` to correctly handle SSH URLs
-- GitHub Actions test failures by installing all dev dependencies including pytest-asyncio
-- Async test support configuration in pyproject.toml
-
-### Changed
-- Updated test workflow to use `pip install -e ".[dev]"` instead of manually installing test dependencies
-
-## [0.1.0] - 2025-11-28
+## [1.0.1] - 2025-11-29
 
 ### Added
-- Initial release of OSS Value Calculator
-- Core functionality for calculating development cost savings from OSS dependencies
-- Support for multiple input formats:
+- **Core Functionality**
+  - Open Source Software Value Calculator for estimating development cost savings
+  - COCOMO II estimation model implementation for accurate cost calculations
+  - Support for analyzing OSS dependencies across multiple ecosystems
+  - Quick estimation mode for rapid assessments
+  - Detailed analysis mode with SLOC metrics
+
+- **Input Format Support**
   - requirements.txt (Python)
   - package.json (Node.js)
-  - CycloneDX SBOM
-  - SPDX SBOM
-  - Simple text list
-- COCOMO II estimation model for cost calculations
-- CLI interface with multiple output formats (JSON, CSV, text)
-- Caching system for improved performance
-- Regional salary data for accurate cost estimates
-- Project type detection and multipliers
-- Comprehensive test suite with pytest
+  - package-lock.json (Node.js)
+  - Cargo.toml/Cargo.lock (Rust)
+  - go.mod/go.sum (Go)
+  - pom.xml (Maven)
+  - build.gradle (Gradle)
+  - Pipfile/Pipfile.lock (Python)
+  - pyproject.toml/poetry.lock (Python)
+  - CycloneDX SBOM (JSON/XML)
+  - SPDX SBOM (JSON/YAML/Tag-Value)
+  - Simple text list of packages
+  - yarn.lock (Node.js)
 
-### Features
-- Quick estimation mode for rapid assessments
-- Detailed analysis with SLOC metrics
-- Support for various package ecosystems (PyPI, npm, cargo, go, rubygems, maven)
-- Repository URL discovery from package metadata
-- Complexity analysis for code quality assessment
-- Health metrics for package maintenance status
+- **Package Ecosystems**
+  - PyPI (Python)
+  - npm (Node.js)
+  - Cargo (Rust)
+  - Go modules
+  - RubyGems
+  - Maven (Java)
 
-[Unreleased]: https://github.com/SemClone/ossval/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/SemClone/ossval/releases/tag/v0.1.0
+- **CLI Features**
+  - Interactive command-line interface
+  - Multiple output formats (JSON, CSV, human-readable text)
+  - Region-based salary calculations for accurate cost estimates
+  - Project type detection and cost multipliers
+  - Custom methodology support (COCOMO II, SLOCCount)
+  - Cache management commands
+
+- **Analysis Features**
+  - Repository URL discovery from package metadata
+  - SLOC (Source Lines of Code) analysis using pygount
+  - Complexity analysis using radon for Python code
+  - Package health metrics evaluation
+  - Project type detection (web, mobile, embedded, etc.)
+  - Regional salary data for 10+ regions worldwide
+  - Effort and duration calculations
+
+- **Infrastructure**
+  - Persistent caching system using diskcache for improved performance
+  - Asynchronous operations for efficient processing
+  - Comprehensive error handling and logging
+  - Modular architecture with pluggable parsers and estimators
+
+- **Developer Tools**
+  - Comprehensive test suite with pytest
+  - Test coverage reporting with pytest-cov
+  - Type hints throughout the codebase
+  - Code quality tools (ruff, mypy)
+  - Async test support with pytest-asyncio
+
+- **CI/CD and Documentation**
+  - GitHub Actions workflows for continuous integration
+    - Automated testing on Ubuntu and macOS
+    - Python 3.13 support
+    - License compliance checking
+    - PR validation
+    - Automated PyPI publishing on release
+  - CONTRIBUTING.md with contribution guidelines
+  - SECURITY.md with vulnerability reporting process
+  - Comprehensive README with usage examples
+  - Project URLs for PyPI integration
+
+### Fixed
+- Git URL normalization for SSH format repositories
+- Async test compatibility in CI/CD pipeline
+- Proper dev dependency installation in GitHub Actions
+
+### Security
+- Dependency vulnerability scanning
+- License compliance checking for all dependencies
+- Security policy for responsible disclosure
+
+### Performance
+- Disk-based caching for API responses and analysis results
+- Parallel processing for multiple package analysis
+- Efficient SLOC counting with pygount
+- Optimized repository URL discovery
+
+[Unreleased]: https://github.com/SemClone/ossval/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/SemClone/ossval/releases/tag/v1.0.1

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import click
 
+from ossval import __version__
 from ossval.cache import AnalysisCache
 from ossval.core import analyze, quick_estimate
 from ossval.models import AnalysisConfig, Region, ProjectType
@@ -13,7 +14,7 @@ from ossval.output import format_csv, format_json, format_text
 
 
 @click.group()
-@click.version_option(version="0.1.0")
+@click.version_option(version=__version__)
 def main():
     """OSSVAL: Open Source Software Valuation Tool."""
     pass

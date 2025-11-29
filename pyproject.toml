@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ossval"
-version = "0.1.0"
+version = "1.0.1"
 description = "Open Source Software Valuation - Calculate development cost savings from OSS dependencies"
 readme = "README.md"
 requires-python = ">=3.10"

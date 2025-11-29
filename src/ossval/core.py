@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
+from ossval import __version__
 from ossval.analyzers import (
     analyze_complexity,
     analyze_health,
@@ -370,7 +371,7 @@ async def analyze(
     result = AnalysisResult(
         meta={
             "tool": "ossval",
-            "version": "0.1.0",
+            "version": __version__,
             "analyzed_at": datetime.utcnow().isoformat() + "Z",
             "source_file": source_file,
             "source_type": source_type.value,
