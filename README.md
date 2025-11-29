@@ -55,8 +55,10 @@ ossval analyze sbom.json --format json --output results.json
 # Skip repository cloning (faster, but no SLOC analysis)
 ossval analyze sbom.json --no-clone
 
-# List supported formats
-ossval formats list
+# List supported formats and configurations
+ossval formats list              # Show all supported input formats
+ossval formats project-types     # Show project types with cost multipliers
+ossval formats methodologies     # Show available cost estimation models
 
 # Cache management
 ossval cache clear
@@ -107,24 +109,51 @@ OSSVAL is a core component of the SEMCL.ONE ecosystem, enabling comprehensive OS
 
 ## Methodology
 
-### COCOMO II Model
+### Cost Estimation Models
 
-The primary cost estimation model uses COCOMO II with:
-- **Effort Calculation**: `Effort = a × (KSLOC)^b × EAF × Complexity × Project_Type`
-- **Cost Calculation**: `Cost = Effort × Monthly_Salary × Region_Multiplier`
-- **Configurable Parameters**: Scale factors, effort adjustment factors, and multipliers
+#### COCOMO II (Primary)
+The most sophisticated model, based on Barry Boehm's COCOMO II:
+- **Effort Formula**: `Effort = a × (KSLOC)^b × EAF × Complexity × Project_Type`
+- **Cost Formula**: `Cost = Effort × Monthly_Salary × Region_Multiplier`
+- **Default Parameters**: a=2.94, b=1.0997, EAF=1.0
+- **Confidence Range**: 70%-150% of estimate
+- **Accounts for**: Project type, complexity, team experience
 
-### SLOCCount Model
+#### SLOCCount (Alternative)
+Simpler model based on David Wheeler's SLOCCount:
+- **Effort Formula**: `Effort = a × (KSLOC)^b`
+- **Default Parameters**: a=2.4, b=1.05
+- **Faster but less sophisticated**
+- **Lower confidence scores**
 
-Alternative simpler model:
-- **Effort Calculation**: Based on SLOC and language-specific productivity rates
-- **Cost Calculation**: `Cost = Effort × Annual_Salary`
+### Project Types and Multipliers
 
-### Project Type Detection
+OSSVAL automatically detects project types and applies appropriate cost multipliers:
 
-Automatic classification based on keywords and repository analysis:
-- Compiler, Framework, Library, Networking, Database, Machine Learning, and more
-- Each type has specific effort multipliers
+| Project Type | Salary Multiplier | Effort Multiplier | Examples |
+|--------------|-------------------|-------------------|----------|
+| Cryptography | 1.60x | 1.26x | openssl, libsodium, bcrypt |
+| Operating System | 1.50x | 1.22x | kernel, drivers, firmware |
+| Compiler | 1.50x | 1.22x | gcc, llvm, babel, typescript |
+| Database | 1.40x | 1.18x | postgres, mysql, redis, mongo |
+| Machine Learning | 1.40x | 1.18x | tensorflow, pytorch, sklearn |
+| Graphics | 1.30x | 1.14x | opengl, vulkan, game engines |
+| Embedded | 1.25x | 1.12x | firmware, rtos, iot, arduino |
+| Networking | 1.20x | 1.10x | http, grpc, websocket, proxy |
+| Scientific | 1.20x | 1.10x | scipy, numpy, pandas, matplotlib |
+| Framework | 1.15x | 1.07x | react, django, rails, spring |
+| DevTools | 1.10x | 1.05x | linters, formatters, bundlers |
+| Library | 1.00x | 1.00x | (baseline) |
+| Script | 0.70x | 0.84x | utilities, helpers, cli tools |
+
+### Complexity Levels
+
+Code complexity affects cost estimates:
+- **Trivial**: 0.7x multiplier
+- **Simple**: 0.9x multiplier
+- **Moderate**: 1.0x multiplier (baseline)
+- **Complex**: 1.3x multiplier
+- **Very Complex**: 1.7x multiplier
 
 ---
 

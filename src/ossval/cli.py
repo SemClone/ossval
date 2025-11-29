@@ -191,6 +191,61 @@ def formats_list():
     click.echo("  - Simple text format (one package per line)")
 
 
+@formats.command("project-types")
+def formats_project_types():
+    """List all supported project types and their multipliers."""
+    from ossval.data.multipliers import PROJECT_TYPE_MULTIPLIERS
+
+    click.echo("Supported Project Types and Cost Multipliers:")
+    click.echo("=" * 60)
+    click.echo(f"{'Type':<20} {'Salary Multiplier':<20} {'Effort Multiplier':<20}")
+    click.echo("-" * 60)
+
+    # Sort by salary multiplier descending
+    sorted_types = sorted(PROJECT_TYPE_MULTIPLIERS.items(),
+                         key=lambda x: x[1]['salary'], reverse=True)
+
+    for project_type, multipliers in sorted_types:
+        type_name = project_type.value.replace('_', ' ').title()
+        salary_mult = multipliers['salary']
+        effort_mult = multipliers['effort']
+        click.echo(f"{type_name:<20} {salary_mult:<20.2f} {effort_mult:<20.2f}")
+
+    click.echo()
+    click.echo("Notes:")
+    click.echo("- Multipliers are applied to base cost estimates")
+    click.echo("- Cryptography projects have the highest multiplier (1.6x salary)")
+    click.echo("- Script/utility projects have the lowest multiplier (0.7x salary)")
+    click.echo("- Library type is the baseline (1.0x)")
+
+
+@formats.command("methodologies")
+def formats_methodologies():
+    """List available cost estimation methodologies."""
+    click.echo("Available Cost Estimation Methodologies:")
+    click.echo("=" * 60)
+    click.echo()
+    click.echo("1. COCOMO II (Primary)")
+    click.echo("   - Most sophisticated and widely used")
+    click.echo("   - Formula: Effort = a × (KSLOC)^b × EAF × Multipliers")
+    click.echo("   - Default: a=2.94, b=1.0997, EAF=1.0")
+    click.echo("   - Accounts for project type and complexity")
+    click.echo("   - Provides 70%-150% confidence ranges")
+    click.echo()
+    click.echo("2. SLOCCount (Alternative)")
+    click.echo("   - Simpler model based on David Wheeler's SLOCCount")
+    click.echo("   - Formula: Effort = a × (KSLOC)^b")
+    click.echo("   - Default: a=2.4, b=1.05")
+    click.echo("   - Less sophisticated but faster")
+    click.echo("   - Lower confidence scores")
+    click.echo()
+    click.echo("Both models use:")
+    click.echo("- Regional salary data (18+ regions)")
+    click.echo("- Project type detection")
+    click.echo("- Complexity analysis")
+    click.echo("- Language-specific adjustments")
+
+
 @main.group()
 def cache():
     """Cache management commands."""
