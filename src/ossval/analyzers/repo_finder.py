@@ -143,7 +143,9 @@ def _normalize_git_url(url: str) -> str:
     # Convert ssh to https
     if url.startswith("git@"):
         # git@github.com:user/repo -> https://github.com/user/repo
-        url = url.replace("git@", "https://").replace(":", "/")
+        url = url[4:]  # Remove "git@"
+        url = url.replace(":", "/", 1)  # Replace first ":" with "/"
+        url = f"https://{url}"
 
     # Ensure it starts with http:// or https://
     if not url.startswith(("http://", "https://")):

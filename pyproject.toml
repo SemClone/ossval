@@ -49,6 +49,13 @@ dev = [
     "types-aiofiles",
 ]
 
+[project.urls]
+"Homepage" = "https://github.com/SemClone/ossval"
+"Repository" = "https://github.com/SemClone/ossval"
+"Documentation" = "https://github.com/SemClone/ossval#readme"
+"Bug Tracker" = "https://github.com/SemClone/ossval/issues"
+"Source Code" = "https://github.com/SemClone/ossval"
+
 [project.scripts]
 ossval = "ossval.cli:main"
 
