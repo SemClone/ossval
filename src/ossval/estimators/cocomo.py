@@ -2,6 +2,8 @@
 
 from ossval.data.multipliers import (
     get_complexity_multiplier,
+    get_halstead_multiplier,
+    get_maturity_multiplier,
     get_project_type_multiplier,
 )
 from ossval.data.salaries import get_monthly_rate
@@ -67,6 +69,8 @@ class COCOMO2Estimator(BaseEstimator):
                 project_type=package.project_type,
                 complexity_multiplier=1.0,
                 project_type_multiplier=1.0,
+                maturity_multiplier=1.0,
+                halstead_multiplier=1.0,
             )
 
         # Calculate KSLOC (thousands of source lines of code)
@@ -83,14 +87,20 @@ class COCOMO2Estimator(BaseEstimator):
             package.project_type, multiplier_type="effort"
         )
 
-        # Calculate effort using COCOMO II formula
-        # Effort = a × (KSLOC)^b × EAF × Complexity_Multiplier × Project_Type_Multiplier
+        # Get new multipliers based on git history and Halstead metrics
+        maturity_multiplier = get_maturity_multiplier(package.git_history)
+        halstead_multiplier = get_halstead_multiplier(package.halstead)
+
+        # Calculate effort using COCOMO II formula with new multipliers
+        # Effort = a × (KSLOC)^b × EAF × Complexity × ProjectType × Maturity × Halstead
         effort_person_months = (
             self.a
             * (ksloc ** self.b)
             * self.eaf
             * complexity_multiplier
             * project_type_multiplier
+            * maturity_multiplier
+            * halstead_multiplier
         )
 
         # Convert to person-years
@@ -110,11 +120,15 @@ class COCOMO2Estimator(BaseEstimator):
         # Calculate confidence (based on data availability)
         confidence = 0.5  # Base confidence
         if package.sloc:
-            confidence += 0.2
+            confidence += 0.15
         if package.complexity:
-            confidence += 0.2
-        if package.health:
             confidence += 0.1
+        if package.halstead:
+            confidence += 0.1
+        if package.git_history:
+            confidence += 0.1
+        if package.health:
+            confidence += 0.05
         confidence = min(confidence, 1.0)
 
         # Calculate low and high estimates (70% and 150% of base)
@@ -133,5 +147,7 @@ class COCOMO2Estimator(BaseEstimator):
             project_type=package.project_type,
             complexity_multiplier=complexity_multiplier,
             project_type_multiplier=project_type_multiplier,
+            maturity_multiplier=maturity_multiplier,
+            halstead_multiplier=halstead_multiplier,
         )
 

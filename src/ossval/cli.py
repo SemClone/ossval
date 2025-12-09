@@ -75,6 +75,12 @@ def main():
     default="cocomo2",
     help="Cost estimation methodology",
 )
+@click.option(
+    "--type",
+    "-t",
+    type=click.Choice([pt.value for pt in ProjectType], case_sensitive=False),
+    help="Override project type detection",
+)
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 @click.option("--quiet", "-q", is_flag=True, help="Quiet mode")
 def analyze_cmd(
@@ -88,6 +94,7 @@ def analyze_cmd(
     concurrency,
     github_token,
     methodology,
+    type,
     verbose,
     quiet,
 ):
@@ -101,6 +108,7 @@ def analyze_cmd(
         concurrency=concurrency,
         github_token=github_token or os.getenv("GITHUB_TOKEN"),
         methodology=methodology,
+        project_type_override=ProjectType(type) if type else None,
         verbose=verbose,
         quiet=quiet,
     )

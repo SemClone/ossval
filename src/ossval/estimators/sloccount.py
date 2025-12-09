@@ -2,6 +2,8 @@
 
 from ossval.data.multipliers import (
     get_complexity_multiplier,
+    get_halstead_multiplier,
+    get_maturity_multiplier,
     get_project_type_multiplier,
 )
 from ossval.data.salaries import get_monthly_rate
@@ -53,6 +55,8 @@ class SLOCCountEstimator(BaseEstimator):
                 project_type=package.project_type,
                 complexity_multiplier=1.0,
                 project_type_multiplier=1.0,
+                maturity_multiplier=1.0,
+                halstead_multiplier=1.0,
             )
 
         # Calculate KSLOC
@@ -69,9 +73,18 @@ class SLOCCountEstimator(BaseEstimator):
             package.project_type, multiplier_type="effort"
         )
 
-        # Calculate effort: Effort = a × (KSLOC)^b
+        # Get new multipliers based on git history and Halstead metrics
+        maturity_multiplier = get_maturity_multiplier(package.git_history)
+        halstead_multiplier = get_halstead_multiplier(package.halstead)
+
+        # Calculate effort with all multipliers
         effort_person_months = (
-            self.a * (ksloc ** self.b) * complexity_multiplier * project_type_multiplier
+            self.a
+            * (ksloc ** self.b)
+            * complexity_multiplier
+            * project_type_multiplier
+            * maturity_multiplier
+            * halstead_multiplier
         )
 
         effort_person_years = effort_person_months / 12.0
@@ -90,9 +103,13 @@ class SLOCCountEstimator(BaseEstimator):
         # Confidence
         confidence = 0.4
         if package.sloc:
-            confidence += 0.3
-        if package.complexity:
             confidence += 0.2
+        if package.complexity:
+            confidence += 0.1
+        if package.halstead:
+            confidence += 0.1
+        if package.git_history:
+            confidence += 0.1
         confidence = min(confidence, 1.0)
 
         cost_usd_low = base_cost * 0.7
@@ -110,5 +127,7 @@ class SLOCCountEstimator(BaseEstimator):
             project_type=package.project_type,
             complexity_multiplier=complexity_multiplier,
             project_type_multiplier=project_type_multiplier,
+            maturity_multiplier=maturity_multiplier,
+            halstead_multiplier=halstead_multiplier,
         )
 

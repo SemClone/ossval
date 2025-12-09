@@ -8,8 +8,11 @@ from typing import List, Optional
 from ossval import __version__
 from ossval.analyzers import (
     analyze_complexity,
+    analyze_directory_halstead,
+    analyze_git_history,
     analyze_health,
     analyze_sloc,
+    calculate_maintainability_index,
     find_repository_url,
 )
 from ossval.data.project_types import detect_project_type
@@ -101,8 +104,11 @@ async def _analyze_package(
         if repo_url:
             package.repository_url = repo_url
 
-    # Detect project type
-    if package.project_type == ProjectType.LIBRARY:
+    # Detect project type (or use override)
+    if config.project_type_override:
+        package.project_type = config.project_type_override
+        package.project_type_detection = {"source": "cli_override", "confidence": 1.0}
+    elif package.project_type == ProjectType.LIBRARY:
         project_type, detection_details = detect_project_type(
             package.name, package.repository_url
         )
@@ -110,6 +116,7 @@ async def _analyze_package(
         package.project_type_detection = detection_details
 
     # Analyze SLOC if repository URL is available and cloning is enabled
+    repo_path = None
     if config.clone_repos and package.repository_url:
         cache_dir = str(cache.cache_dir) if cache else None
         try:
@@ -121,6 +128,11 @@ async def _analyze_package(
             if sloc and sloc.total > 0:
                 package.sloc = sloc
                 package.language = _infer_language_from_sloc(sloc)
+
+                # Store repo path for additional analysis
+                if cache_dir:
+                    repo_name = package.repository_url.split("/")[-1].replace(".git", "")
+                    repo_path = Path(cache_dir) / "repos" / repo_name
             elif sloc is None:
                 # Failed to get SLOC - add warning
                 package.warnings.append(
@@ -129,6 +141,24 @@ async def _analyze_package(
         except Exception as e:
             package.warnings.append(f"Error analyzing SLOC: {str(e)}")
 
+    # Analyze Halstead metrics if we have a cloned repository
+    if repo_path and repo_path.exists():
+        try:
+            halstead = analyze_directory_halstead(repo_path)
+            if halstead:
+                package.halstead = halstead
+        except Exception as e:
+            package.warnings.append(f"Error analyzing Halstead metrics: {str(e)}")
+
+    # Analyze git history if we have a cloned repository
+    if repo_path and repo_path.exists():
+        try:
+            git_history = await analyze_git_history(repo_path, use_cache=config.use_cache)
+            if git_history:
+                package.git_history = git_history
+        except Exception as e:
+            package.warnings.append(f"Error analyzing git history: {str(e)}")
+
     # Analyze complexity (if we have code)
     # Note: For now, we'll use default complexity if no code is available
     if package.complexity is None:
@@ -136,6 +166,17 @@ async def _analyze_package(
         from ossval.models import ComplexityLevel, ComplexityMetrics
 
         package.complexity = ComplexityMetrics(complexity_level=ComplexityLevel.MODERATE)
+
+    # Calculate maintainability index if we have SLOC
+    if package.sloc:
+        try:
+            maintainability = calculate_maintainability_index(
+                package.sloc, package.halstead, package.complexity
+            )
+            if maintainability:
+                package.maintainability = maintainability
+        except Exception as e:
+            package.warnings.append(f"Error calculating maintainability index: {str(e)}")
 
     # Analyze health metrics (GitHub only)
     if package.repository_url and "github.com" in package.repository_url.lower():
@@ -379,6 +420,7 @@ async def analyze(
                 "region": config.region.value,
                 "clone_repos": config.clone_repos,
                 "methodology": config.methodology,
+                "project_type_override": config.project_type_override.value if config.project_type_override else None,
             },
         },
         summary={

@@ -21,6 +21,25 @@ def test_cli_estimate():
     assert "estimate" in result.output or result.exit_code in [0, 1]
 
 
+def test_cli_estimate_with_type():
+    """Test estimate command with project type."""
+    runner = CliRunner()
+    result = runner.invoke(main, ["estimate", "--sloc", "50000", "--region", "us_sf", "--type", "compiler"])
+    assert result.exit_code == 0
+    assert "Estimated cost" in result.output
+
+
+def test_cli_analyze_with_type(sample_requirements_txt):
+    """Test analyze command with project type override."""
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        ["analyze", sample_requirements_txt, "--type", "framework", "--no-clone", "--quiet"]
+    )
+    # Should at least parse the arguments correctly
+    assert result.exit_code in [0, 1]
+
+
 def test_cli_formats():
     """Test formats command."""
     runner = CliRunner()

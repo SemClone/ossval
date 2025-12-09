@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-12-08
+
+### Added
+- **Advanced Code Complexity Metrics**
+  - Halstead complexity metrics (vocabulary, length, volume, difficulty, effort, time, bugs)
+  - Multi-language support for Halstead analysis via tree-sitter
+    - Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift
+  - Automated complexity analysis from code AST without user input
+  - Graceful fallback to Python AST when tree-sitter unavailable
+  - Support for calculating estimated bugs based on Halstead volume
+
+- **Git Repository History Analysis**
+  - Commit count and contributor tracking
+  - Repository age calculation (days and years)
+  - Release/tag counting for maturity assessment
+  - Commit frequency analysis (commits per month)
+  - File churn detection (frequently modified files)
+  - Bus factor calculation (key contributor dependency)
+  - Average files changed per commit metric
+
+- **Maintainability Index**
+  - Microsoft's Maintainability Index calculation (0-100 scale)
+  - Combines Halstead volume, cyclomatic complexity, LOC, and comment ratio
+  - Automatic classification (Low/Medium/High maintainability)
+  - Comment ratio tracking
+  - Complexity per KLOC calculation
+
+- **Enhanced Cost Estimation**
+  - Maturity multiplier (1.0x - 2.5x) based on project age, contributors, and commits
+  - Halstead-based complexity multiplier (0.8x - 1.8x) based on code difficulty
+  - Improved confidence scoring incorporating all available metrics
+  - More accurate estimates for mature, large-scale projects
+
+- **Testing**
+  - 50+ new unit tests for all analyzers
+  - Comprehensive git history analyzer tests (9 tests)
+  - Halstead complexity analyzer tests (15 tests)
+    - Multi-language test coverage (JavaScript, TypeScript, Java, Go, Rust)
+    - Language detection tests
+    - Multi-language directory analysis tests
+  - Maintainability calculator tests (10 tests)
+  - Enhanced multiplier tests (13 tests)
+  - End-to-end integration tests (4 tests)
+  - Total test suite: 94 tests, all passing
+
+### Changed
+- COCOMO II estimator now incorporates maturity and Halstead multipliers
+- SLOCCount estimator updated with new multiplier support
+- Cost estimates now include maturity_multiplier and halstead_multiplier fields
+- Confidence scores adjusted to account for additional metrics
+- Dependencies: Multi-language support (tree-sitter) now optional via `pip install ossval[multilang]`
+  - Available on Python 3.10-3.12 only (tree-sitter-languages doesn't support 3.13 yet)
+  - Python-only Halstead analysis still available on all Python versions via built-in AST
+  - Graceful fallback when tree-sitter not installed
+
+### Improved
+- More accurate cost estimates for mature projects with extensive history
+- Better handling of complex codebases through Halstead metrics
+- Realistic valuation for framework-level projects (e.g., ReactJS)
+
 ## [1.0.1] - 2025-11-29
 
 ### Added
@@ -98,5 +158,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Efficient SLOC counting with pygount
 - Optimized repository URL discovery
 
-[Unreleased]: https://github.com/SemClone/ossval/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/SemClone/ossval/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/SemClone/ossval/compare/v1.0.1...v1.2.1
 [1.0.1]: https://github.com/SemClone/ossval/releases/tag/v1.0.1
