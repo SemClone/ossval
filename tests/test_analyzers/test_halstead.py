@@ -3,7 +3,10 @@
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from ossval.analyzers.halstead import (
+    TREE_SITTER_AVAILABLE,
     analyze_directory_halstead,
     analyze_python_file,
     analyze_source_file,
@@ -110,9 +113,12 @@ def test_analyze_invalid_syntax():
         metrics = analyze_python_file(Path(f.name))
 
     # Tree-sitter is resilient to syntax errors and can still parse
-    # So we expect metrics even for invalid syntax (this is intentional)
-    assert metrics is not None
-    assert metrics.vocabulary > 0
+    # Without tree-sitter, Python AST fails on invalid syntax
+    if TREE_SITTER_AVAILABLE:
+        assert metrics is not None
+        assert metrics.vocabulary > 0
+    else:
+        assert metrics is None
 
 
 def test_analyze_directory():
@@ -233,6 +239,7 @@ def test_detect_language():
     assert detect_language(Path("test.md")) is None
 
 
+@pytest.mark.skipif(not TREE_SITTER_AVAILABLE, reason="Requires tree-sitter for multi-language support")
 def test_analyze_javascript_file():
     """Test Halstead analysis on a JavaScript file."""
     code = """
@@ -265,6 +272,7 @@ if (typeof module !== 'undefined') {
     assert metrics.effort > 0
 
 
+@pytest.mark.skipif(not TREE_SITTER_AVAILABLE, reason="Requires tree-sitter for multi-language support")
 def test_analyze_typescript_file():
     """Test Halstead analysis on a TypeScript file."""
     code = """
@@ -300,6 +308,7 @@ const sum = calc.add(5, 3);
     assert metrics.difficulty > 0
 
 
+@pytest.mark.skipif(not TREE_SITTER_AVAILABLE, reason="Requires tree-sitter for multi-language support")
 def test_analyze_java_file():
     """Test Halstead analysis on a Java file."""
     code = """
@@ -332,6 +341,7 @@ public class Calculator {
     assert metrics.volume > 0
 
 
+@pytest.mark.skipif(not TREE_SITTER_AVAILABLE, reason="Requires tree-sitter for multi-language support")
 def test_analyze_go_file():
     """Test Halstead analysis on a Go file."""
     code = """
@@ -365,6 +375,7 @@ func main() {
     assert metrics.volume > 0
 
 
+@pytest.mark.skipif(not TREE_SITTER_AVAILABLE, reason="Requires tree-sitter for multi-language support")
 def test_analyze_rust_file():
     """Test Halstead analysis on a Rust file."""
     code = """
@@ -394,6 +405,7 @@ fn main() {
     assert metrics.volume > 0
 
 
+@pytest.mark.skipif(not TREE_SITTER_AVAILABLE, reason="Requires tree-sitter for multi-language support")
 def test_analyze_multi_language_directory():
     """Test Halstead analysis on a directory with multiple languages."""
     with tempfile.TemporaryDirectory() as tmpdir:
