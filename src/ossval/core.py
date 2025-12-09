@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import urlparse
 
 from ossval import __version__
 from ossval.analyzers import (
@@ -179,10 +180,15 @@ async def _analyze_package(
             package.warnings.append(f"Error calculating maintainability index: {str(e)}")
 
     # Analyze health metrics (GitHub only)
-    if package.repository_url and "github.com" in package.repository_url.lower():
-        health = await analyze_health(package.repository_url, config.github_token)
-        if health:
-            package.health = health
+    if package.repository_url:
+        try:
+            parsed = urlparse(package.repository_url.lower())
+            if parsed.netloc == "github.com":
+                health = await analyze_health(package.repository_url, config.github_token)
+                if health:
+                    package.health = health
+        except Exception:
+            pass
 
     return package
 

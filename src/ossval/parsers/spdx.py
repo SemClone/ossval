@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 from typing import List
+from urllib.parse import urlparse
 
 from ossval.models import Package, SourceType
 from ossval.parsers.base import BaseParser, ParseResult
@@ -31,6 +32,39 @@ class SPDXParser(BaseParser):
             except Exception:
                 return False
         return False
+
+    @staticmethod
+    def _is_git_url(url: str) -> bool:
+        """
+        Safely check if a URL is a git repository URL.
+
+        Checks:
+        - Protocol starts with git+ (e.g., git+https://)
+        - Domain is github.com, gitlab.com, or bitbucket.org
+
+        Args:
+            url: URL string to check
+
+        Returns:
+            True if it's a git URL, False otherwise
+        """
+        if not url or url == "NOASSERTION":
+            return False
+
+        # Check if it starts with git+ protocol
+        if url.startswith("git+"):
+            return True
+
+        # Parse URL and check domain
+        try:
+            # Handle git@ SSH URLs
+            if url.startswith("git@"):
+                return True
+
+            parsed = urlparse(url if "://" in url else f"https://{url}")
+            return parsed.netloc in ["github.com", "gitlab.com", "bitbucket.org"]
+        except Exception:
+            return False
 
     def parse(self, filepath: str) -> ParseResult:
         """Parse SPDX SBOM file."""
@@ -86,10 +120,9 @@ class SPDXParser(BaseParser):
             # Extract download location as fallback
             if not repository_url:
                 download_location = pkg_data.get("downloadLocation", "")
-                if download_location and download_location != "NOASSERTION":
+                if self._is_git_url(download_location):
                     # Try to extract git URL
-                    if "git+" in download_location or "github.com" in download_location:
-                        repository_url = download_location.replace("git+", "").split("#")[0]
+                    repository_url = download_location.replace("git+", "").split("#")[0]
 
             package = Package(
                 name=name,
@@ -133,18 +166,17 @@ class SPDXParser(BaseParser):
                             ecosystem = self._extract_ecosystem_from_purl(f"pkg:{purl}")
                             if ecosystem:
                                 current_package["ecosystem"] = ecosystem
-                    elif "git+" in ref_line or "github.com" in ref_line:
-                        # Extract repository URL
-                        url_match = re.search(r"(https?://[^\s]+)", ref_line)
-                        if url_match:
+                    else:
+                        # Try to extract repository URL
+                        url_match = re.search(r"(https?://[^\s]+|git\+[^\s]+)", ref_line)
+                        if url_match and self._is_git_url(url_match.group(1)):
                             current_package["repository_url"] = url_match.group(1)
                 elif line.startswith("PackageDownloadLocation:") and in_package:
                     download_loc = line.split(":", 1)[1].strip()
-                    if download_loc and download_loc != "NOASSERTION":
-                        if "git+" in download_loc or "github.com" in download_loc:
-                            current_package["repository_url"] = (
-                                download_loc.replace("git+", "").split("#")[0]
-                            )
+                    if self._is_git_url(download_loc):
+                        current_package["repository_url"] = (
+                            download_loc.replace("git+", "").split("#")[0]
+                        )
 
             # Don't forget the last package
             if in_package and current_package.get("name"):

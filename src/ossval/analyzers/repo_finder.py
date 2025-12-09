@@ -108,17 +108,25 @@ def _is_valid_git_url(url: str) -> bool:
     """Check if URL looks like a valid git repository."""
     if not url:
         return False
+
     url_lower = url.lower()
-    # Check for common git hosting platforms (with or without trailing slash)
-    return (
-        "github.com" in url_lower
-        or "gitlab.com" in url_lower
-        or "bitbucket.org" in url_lower
-        or url_lower.startswith("git+")
-        or url_lower.endswith(".git")
-        or url_lower.endswith(".git/")
-        or url_lower.startswith("git://")
-    )
+
+    # Check for git protocol prefixes
+    if url_lower.startswith(("git+", "git://", "git@")):
+        return True
+
+    # Check for .git suffix
+    if url_lower.endswith(".git") or url_lower.endswith(".git/"):
+        return True
+
+    # Check for common git hosting platforms by parsing domain
+    try:
+        # Add protocol if missing for parsing
+        parse_url = url_lower if "://" in url_lower else f"https://{url_lower}"
+        parsed = urlparse(parse_url)
+        return parsed.netloc in ["github.com", "gitlab.com", "bitbucket.org"]
+    except Exception:
+        return False
 
 
 def _normalize_git_url(url: str) -> str:
@@ -149,8 +157,13 @@ def _normalize_git_url(url: str) -> str:
 
     # Ensure it starts with http:// or https://
     if not url.startswith(("http://", "https://")):
-        if "github.com" in url or "gitlab.com" in url or "bitbucket.org" in url:
-            url = f"https://{url}"
+        # Parse URL with dummy protocol to check domain safely
+        try:
+            parsed = urlparse(f"https://{url}")
+            if parsed.netloc in ["github.com", "gitlab.com", "bitbucket.org"]:
+                url = f"https://{url}"
+        except Exception:
+            pass
 
     # Add .git suffix if it's a GitHub/GitLab/Bitbucket URL
     try:
