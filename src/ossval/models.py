@@ -113,6 +113,48 @@ class ComplexityMetrics(BaseModel):
     )
 
 
+class HalsteadMetrics(BaseModel):
+    """Halstead complexity metrics."""
+
+    vocabulary: int = Field(description="n = n1 + n2 (unique operators + operands)")
+    length: int = Field(description="N = N1 + N2 (total operators + operands)")
+    calculated_length: float = Field(description="Estimated length")
+    volume: float = Field(description="Program volume (N × log2(n))")
+    difficulty: float = Field(description="Program difficulty")
+    effort: float = Field(description="Effort to implement/understand")
+    time_seconds: float = Field(description="Time required to program (seconds)")
+    bugs: float = Field(description="Estimated number of bugs (volume / 3000)")
+
+
+class GitHistoryMetrics(BaseModel):
+    """Git repository history metrics."""
+
+    commit_count: int = Field(description="Total number of commits")
+    contributor_count: int = Field(description="Total number of contributors")
+    age_days: int = Field(description="Repository age in days")
+    age_years: float = Field(description="Repository age in years")
+    first_commit_date: Optional[datetime] = Field(None, description="Date of first commit")
+    last_commit_date: Optional[datetime] = Field(None, description="Date of last commit")
+    release_count: int = Field(description="Number of releases/tags")
+    commits_per_month: float = Field(description="Average commits per month (last year)")
+    avg_files_per_commit: float = Field(description="Average files changed per commit")
+    high_churn_files: int = Field(description="Number of frequently changed files")
+    bus_factor: int = Field(description="Minimum contributors for 50% of commits")
+
+
+class MaintainabilityMetrics(BaseModel):
+    """Maintainability Index and derived metrics."""
+
+    maintainability_index: float = Field(
+        ge=0.0, le=100.0, description="Maintainability Index (0-100, higher is better)"
+    )
+    maintainability_level: str = Field(description="Low/Medium/High maintainability")
+    comment_ratio: float = Field(description="Ratio of comment lines to code lines")
+    avg_complexity_per_kloc: float = Field(
+        description="Average cyclomatic complexity per 1000 LOC"
+    )
+
+
 class HealthMetrics(BaseModel):
     """Repository health metrics from GitHub API."""
 
@@ -147,6 +189,12 @@ class CostEstimate(BaseModel):
     project_type: ProjectType = Field(description="Project type classification")
     complexity_multiplier: float = Field(description="Complexity multiplier applied")
     project_type_multiplier: float = Field(description="Project type multiplier applied")
+    maturity_multiplier: float = Field(
+        default=1.0, description="Maturity/scale multiplier from git history"
+    )
+    halstead_multiplier: float = Field(
+        default=1.0, description="Halstead complexity multiplier"
+    )
 
 
 class Package(BaseModel):
@@ -165,6 +213,11 @@ class Package(BaseModel):
     repository_url: Optional[str] = Field(None, description="Source repository URL")
     sloc: Optional[SLOCMetrics] = Field(None, description="SLOC metrics")
     complexity: Optional[ComplexityMetrics] = Field(None, description="Complexity metrics")
+    halstead: Optional[HalsteadMetrics] = Field(None, description="Halstead complexity metrics")
+    maintainability: Optional[MaintainabilityMetrics] = Field(
+        None, description="Maintainability metrics"
+    )
+    git_history: Optional[GitHistoryMetrics] = Field(None, description="Git history metrics")
     health: Optional[HealthMetrics] = Field(None, description="Health metrics")
     cost_estimate: Optional[CostEstimate] = Field(None, description="Cost estimate")
     is_critical: bool = Field(
@@ -194,6 +247,7 @@ class AnalysisConfig(BaseModel):
     methodology: str = Field("cocomo2", description="Cost estimation methodology")
     verbose: bool = Field(False, description="Verbose output")
     quiet: bool = Field(False, description="Quiet mode (minimal output)")
+    project_type_override: Optional[ProjectType] = Field(None, description="Override project type detection")
 
 
 class AnalysisResult(BaseModel):
