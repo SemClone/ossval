@@ -6,6 +6,8 @@ from pathlib import Path
 from ossval.analyzers.halstead import (
     analyze_directory_halstead,
     analyze_python_file,
+    analyze_source_file,
+    detect_language,
 )
 
 
@@ -107,8 +109,10 @@ def test_analyze_invalid_syntax():
 
         metrics = analyze_python_file(Path(f.name))
 
-    # Invalid syntax should return None
-    assert metrics is None
+    # Tree-sitter is resilient to syntax errors and can still parse
+    # So we expect metrics even for invalid syntax (this is intentional)
+    assert metrics is not None
+    assert metrics.vocabulary > 0
 
 
 def test_analyze_directory():
@@ -208,3 +212,227 @@ def simple(x):
     assert metrics.effort == metrics.difficulty * metrics.volume
     assert metrics.time_seconds == metrics.effort / 18.0  # Stroud number
     assert metrics.bugs == metrics.volume / 3000.0
+
+
+def test_detect_language():
+    """Test language detection from file extensions."""
+    assert detect_language(Path("test.py")) == "python"
+    assert detect_language(Path("test.js")) == "javascript"
+    assert detect_language(Path("test.ts")) == "typescript"
+    assert detect_language(Path("test.tsx")) == "typescript"
+    assert detect_language(Path("test.java")) == "java"
+    assert detect_language(Path("test.c")) == "c"
+    assert detect_language(Path("test.cpp")) == "cpp"
+    assert detect_language(Path("test.cs")) == "c_sharp"
+    assert detect_language(Path("test.go")) == "go"
+    assert detect_language(Path("test.rs")) == "rust"
+    assert detect_language(Path("test.php")) == "php"
+    assert detect_language(Path("test.rb")) == "ruby"
+    assert detect_language(Path("test.swift")) == "swift"
+    assert detect_language(Path("test.txt")) is None
+    assert detect_language(Path("test.md")) is None
+
+
+def test_analyze_javascript_file():
+    """Test Halstead analysis on a JavaScript file."""
+    code = """
+function add(a, b) {
+    return a + b;
+}
+
+function multiply(x, y) {
+    const result = x * y;
+    return result;
+}
+
+if (typeof module !== 'undefined') {
+    const result = add(5, 3);
+    console.log(result);
+}
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
+        f.write(code)
+        f.flush()
+
+        metrics = analyze_source_file(Path(f.name))
+
+    assert metrics is not None
+    assert metrics.vocabulary > 0
+    assert metrics.length > 0
+    assert metrics.volume > 0
+    assert metrics.difficulty > 0
+    assert metrics.effort > 0
+
+
+def test_analyze_typescript_file():
+    """Test Halstead analysis on a TypeScript file."""
+    code = """
+interface Calculator {
+    add(a: number, b: number): number;
+    multiply(a: number, b: number): number;
+}
+
+class SimpleCalculator implements Calculator {
+    add(a: number, b: number): number {
+        return a + b;
+    }
+
+    multiply(a: number, b: number): number {
+        const result = a * b;
+        return result;
+    }
+}
+
+const calc = new SimpleCalculator();
+const sum = calc.add(5, 3);
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ts", delete=False) as f:
+        f.write(code)
+        f.flush()
+
+        metrics = analyze_source_file(Path(f.name))
+
+    assert metrics is not None
+    assert metrics.vocabulary > 0
+    assert metrics.volume > 0
+    assert metrics.difficulty > 0
+
+
+def test_analyze_java_file():
+    """Test Halstead analysis on a Java file."""
+    code = """
+public class Calculator {
+    public int add(int a, int b) {
+        return a + b;
+    }
+
+    public int multiply(int a, int b) {
+        int result = a * b;
+        return result;
+    }
+
+    public static void main(String[] args) {
+        Calculator calc = new Calculator();
+        int sum = calc.add(5, 3);
+        System.out.println(sum);
+    }
+}
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+        f.write(code)
+        f.flush()
+
+        metrics = analyze_source_file(Path(f.name))
+
+    assert metrics is not None
+    assert metrics.vocabulary > 0
+    assert metrics.volume > 0
+
+
+def test_analyze_go_file():
+    """Test Halstead analysis on a Go file."""
+    code = """
+package main
+
+import "fmt"
+
+func add(a int, b int) int {
+    return a + b
+}
+
+func multiply(x int, y int) int {
+    result := x * y
+    return result
+}
+
+func main() {
+    result := add(5, 3)
+    fmt.Println(result)
+}
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".go", delete=False) as f:
+        f.write(code)
+        f.flush()
+
+        metrics = analyze_source_file(Path(f.name))
+
+    assert metrics is not None
+    assert metrics.vocabulary > 0
+    assert metrics.volume > 0
+
+
+def test_analyze_rust_file():
+    """Test Halstead analysis on a Rust file."""
+    code = """
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+fn multiply(x: i32, y: i32) -> i32 {
+    let result = x * y;
+    result
+}
+
+fn main() {
+    let result = add(5, 3);
+    println!("{}", result);
+}
+"""
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".rs", delete=False) as f:
+        f.write(code)
+        f.flush()
+
+        metrics = analyze_source_file(Path(f.name))
+
+    assert metrics is not None
+    assert metrics.vocabulary > 0
+    assert metrics.volume > 0
+
+
+def test_analyze_multi_language_directory():
+    """Test Halstead analysis on a directory with multiple languages."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmppath = Path(tmpdir)
+
+        # Create Python file
+        (tmppath / "calc.py").write_text("""
+def add(a, b):
+    return a + b
+""")
+
+        # Create JavaScript file
+        (tmppath / "calc.js").write_text("""
+function add(a, b) {
+    return a + b;
+}
+""")
+
+        # Create Java file
+        (tmppath / "Calc.java").write_text("""
+public class Calc {
+    public int add(int a, int b) {
+        return a + b;
+    }
+}
+""")
+
+        # Create Go file
+        (tmppath / "calc.go").write_text("""
+package main
+func add(a int, b int) int {
+    return a + b
+}
+""")
+
+        metrics = analyze_directory_halstead(tmppath)
+
+    # Should aggregate metrics from all supported files
+    assert metrics is not None
+    assert metrics.volume > 0
+    assert metrics.effort > 0
+    assert metrics.bugs > 0

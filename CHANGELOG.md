@@ -12,7 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Advanced Code Complexity Metrics**
   - Halstead complexity metrics (vocabulary, length, volume, difficulty, effort, time, bugs)
+  - Multi-language support for Halstead analysis via tree-sitter
+    - Python, JavaScript, TypeScript, Java, C, C++, C#, Go, Rust, PHP, Ruby, Swift
   - Automated complexity analysis from code AST without user input
+  - Graceful fallback to Python AST when tree-sitter unavailable
   - Support for calculating estimated bugs based on Halstead volume
 
 - **Git Repository History Analysis**
@@ -40,17 +43,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Testing**
   - 50+ new unit tests for all analyzers
   - Comprehensive git history analyzer tests (9 tests)
-  - Halstead complexity analyzer tests (8 tests)
+  - Halstead complexity analyzer tests (15 tests)
+    - Multi-language test coverage (JavaScript, TypeScript, Java, Go, Rust)
+    - Language detection tests
+    - Multi-language directory analysis tests
   - Maintainability calculator tests (10 tests)
   - Enhanced multiplier tests (13 tests)
   - End-to-end integration tests (4 tests)
-  - Total test suite: 87 tests, all passing
+  - Total test suite: 94 tests, all passing
 
 ### Changed
 - COCOMO II estimator now incorporates maturity and Halstead multipliers
 - SLOCCount estimator updated with new multiplier support
 - Cost estimates now include maturity_multiplier and halstead_multiplier fields
 - Confidence scores adjusted to account for additional metrics
+- Dependencies: Added tree-sitter (pinned to 0.21.x) and tree-sitter-languages for multi-language AST parsing
 
 ### Improved
 - More accurate cost estimates for mature projects with extensive history
