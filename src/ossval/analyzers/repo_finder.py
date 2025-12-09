@@ -252,21 +252,65 @@ async def _find_cargo_repo(package_name: str) -> Optional[str]:
 
 
 def _find_go_repo(package_name: str) -> Optional[str]:
-    """Find repository URL from Go module path."""
+    """
+    Find repository URL from Go module path.
+
+    Safely validates and constructs URLs from Go module paths.
+    """
+    if not package_name:
+        return None
+
+    # Validate that package_name doesn't contain dangerous characters
+    # that could lead to URL injection
+    dangerous_chars = ['@', '#', '?', '&', ' ', '\n', '\r', '\t']
+    if any(char in package_name for char in dangerous_chars):
+        return None
+
     # Go modules often follow github.com/user/repo pattern
-    if package_name.startswith("github.com/"):
-        return f"https://{package_name}.git"
-    elif package_name.startswith("gitlab.com/"):
-        return f"https://{package_name}.git"
-    elif package_name.startswith("bitbucket.org/"):
-        return f"https://{package_name}.git"
+    allowed_domains = ["github.com/", "gitlab.com/", "bitbucket.org/"]
+
+    for domain in allowed_domains:
+        if package_name.startswith(domain):
+            # Extract path after domain
+            path = package_name[len(domain):]
+
+            # Validate path structure (should be user/repo or user/repo/subpath)
+            if not path or path.startswith('/') or path.endswith('/'):
+                return None
+
+            # Check for path traversal attempts
+            if '..' in path or path.startswith('.'):
+                return None
+
+            # Validate path contains only safe characters
+            if not all(c.isalnum() or c in '/-_.' for c in path):
+                return None
+
+            # Construct safe URL
+            return f"https://{domain.rstrip('/')}/{path}.git"
+
     # Try to infer from common patterns
-    elif "." in package_name and "/" in package_name:
+    if "." in package_name and "/" in package_name:
+        # Validate no path traversal
+        if '..' in package_name:
+            return None
+
         # Might be a domain-based module path
         parts = package_name.split("/")
         if len(parts) >= 3:
+            # Validate domain part
+            domain = parts[0]
+            if not all(c.isalnum() or c in '.-' for c in domain):
+                return None
+
+            # Validate path parts
+            path = "/".join(parts[1:])
+            if not all(c.isalnum() or c in '/-_.' for c in path):
+                return None
+
             # Assume it's a git repository
             return f"https://{package_name}.git"
+
     return None
 
 
