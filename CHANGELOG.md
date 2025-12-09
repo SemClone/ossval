@@ -10,14 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.2] - 2025-12-08
 
 ### Security
-- **Fixed URL security vulnerabilities** in string matching patterns
+- **Fixed URL security vulnerabilities** in string matching and URL construction
   - Fixed arbitrary position domain/protocol matching that could be exploited
   - Prevented URL spoofing attacks via malicious URLs (e.g., `evil-github.com-fake.ru`)
+  - Fixed URL injection vulnerability in Go module path handling
+  - Added input validation to prevent malicious package names like `github.com/user/repo@evil.com`
+  - Added path traversal protection (reject `..` in paths)
+  - Whitelisted safe characters for URL construction
   - Replaced unsafe substring checks with proper URL parsing using `urlparse()`
   - All domain checks now validate `netloc` exactly matches expected domain
   - Protocol checks use `startswith()` instead of substring matching
 - Affected files: `src/ossval/parsers/spdx.py`, `src/ossval/analyzers/repo_finder.py`, `src/ossval/core.py`
-- Severity: Medium - Could allow URL spoofing/bypass in repository URL validation
+- Severity: Medium - Could allow URL spoofing/bypass and URL injection in repository URL validation
 
 ## [1.2.1] - 2025-12-08
 
