@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
@@ -31,6 +31,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev]" || pip install ".[dev]"
+
+    - name: Install multi-language support (Python < 3.13)
+      if: matrix.python-version != '3.13'
+      run: |
+        pip install -e ".[multilang]" || pip install ".[multilang]"
 
     - name: Run tests
       run: |

@@ -57,7 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SLOCCount estimator updated with new multiplier support
 - Cost estimates now include maturity_multiplier and halstead_multiplier fields
 - Confidence scores adjusted to account for additional metrics
-- Dependencies: Added tree-sitter (pinned to 0.21.x) and tree-sitter-languages for multi-language AST parsing
+- Dependencies: Multi-language support (tree-sitter) now optional via `pip install ossval[multilang]`
+  - Available on Python 3.10-3.12 only (tree-sitter-languages doesn't support 3.13 yet)
+  - Python-only Halstead analysis still available on all Python versions via built-in AST
+  - Graceful fallback when tree-sitter not installed
 
 ### Improved
 - More accurate cost estimates for mature projects with extensive history
