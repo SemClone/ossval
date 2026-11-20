@@ -1,3 +1,8 @@
+# DEPRECATION NOTICE:
+OSSVAL has been deprecated in favor of Earnie, the platform we launched with SCANOSS. Go to https://earnie.dev to continue.
+
+This repository is archived and receives no further updates.
+
 # OSSVAL - Open Source Software Valuation
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
